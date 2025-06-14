@@ -6,7 +6,7 @@ import { arrayify } from '@/utils/helpers'
 import { logger } from '@/utils/logger'
 import { songStore } from '@/stores/songStore'
 
-const UNKNOWN_ALBUM_ID = 1
+const UNKNOWN_ALBUM_NAME = 'Unknown Album'
 
 interface AlbumUpdateData {
   name: string
@@ -38,11 +38,12 @@ export const albumStore = {
     })
   },
 
-  isUnknown: (album: Album | Album['id']) => {
-    if (typeof album === 'number') {
-      return album === UNKNOWN_ALBUM_ID
+  isUnknown: (album: Album | Album['name']) => {
+    if (typeof album === 'string') {
+      return album === UNKNOWN_ALBUM_NAME
     }
-    return album.id === UNKNOWN_ALBUM_ID
+
+    return album.name === UNKNOWN_ALBUM_NAME
   },
 
   syncWithVault (albums: MaybeArray<Album>) {
@@ -109,7 +110,7 @@ export const albumStore = {
   },
 
   async fetchForArtist (artist: Artist | Artist['id']) {
-    const id = typeof artist === 'number' ? artist : artist.id
+    const id = typeof artist === 'string' ? artist : artist.id
 
     return this.syncWithVault(
       await cache.remember<Album[]>(['artist-albums', id], async () => await http.get<Album[]>(`artists/${id}/albums`)),

@@ -8,7 +8,7 @@ use App\Exceptions\SongUploadFailedException;
 use App\Models\Setting;
 use App\Models\Song;
 use App\Models\User;
-use App\Services\FileScanner;
+use App\Services\Scanner\FileScanner;
 use App\Values\ScanConfiguration;
 use Exception;
 use Illuminate\Http\UploadedFile;
@@ -18,7 +18,7 @@ use Throwable;
 
 use function Functional\memoize;
 
-final class LocalStorage extends SongStorage
+class LocalStorage extends SongStorage
 {
     public function __construct(private readonly FileScanner $scanner)
     {
@@ -26,8 +26,6 @@ final class LocalStorage extends SongStorage
 
     public function storeUploadedFile(UploadedFile $file, User $uploader): Song
     {
-        $this->assertSupported();
-
         $uploadDirectory = $this->getUploadDirectory($uploader);
         $targetFileName = $this->getTargetFileName($file, $uploader);
 
@@ -42,12 +40,12 @@ final class LocalStorage extends SongStorage
                 ));
         } catch (Throwable $e) {
             File::delete($targetPathName);
-            throw new SongUploadFailedException($e->getMessage());
+            throw SongUploadFailedException::fromThrowable($e);
         }
 
         if ($result->isError()) {
             File::delete($targetPathName);
-            throw new SongUploadFailedException($result->error);
+            throw SongUploadFailedException::fromErrorMessage($result->error);
         }
 
         return $this->scanner->getSong();
@@ -60,14 +58,7 @@ final class LocalStorage extends SongStorage
 
             throw_unless((bool) $mediaPath, MediaPathNotSetException::class);
 
-            $dir = sprintf(
-                '%s%s__KOEL_UPLOADS_$%s__%s',
-                $mediaPath,
-                DIRECTORY_SEPARATOR,
-                $uploader->id,
-                DIRECTORY_SEPARATOR
-            );
-
+            $dir = "$mediaPath/__KOEL_UPLOADS_\${$uploader->id}__/";
             File::ensureDirectoryExists($dir);
 
             return $dir;
@@ -91,15 +82,13 @@ final class LocalStorage extends SongStorage
         return Str::take(sha1(Str::uuid()), 6);
     }
 
-    public function delete(Song $song, bool $backup = false): void
+    public function delete(string $location, bool $backup = false): void
     {
-        $path = $song->storage_metadata->getPath();
-
         if ($backup) {
-            File::move($path, "$path.bak");
+            File::move($location, "$location.bak");
         }
 
-        throw_unless(File::delete($path), new Exception("Failed to delete song file: $path"));
+        throw_unless(File::delete($location), new Exception("Failed to delete song file: $location"));
     }
 
     public function testSetup(): void

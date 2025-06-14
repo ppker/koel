@@ -13,7 +13,7 @@
 
         <template #meta>
           <span class="flex meta-content">
-            <a v-if="isNormalArtist" :href="url('artists.show', { id: album.artist_id })" class="artist">
+            <a v-if="isStandardArtist" :href="url('artists.show', { id: album.artist_id })" class="artist">
               {{ album.artist_name }}
             </a>
             <span v-else class="text-k-text-primary">{{ album.artist_name }}</span>
@@ -123,7 +123,7 @@ const AlbumCardSkeleton = defineAsyncComponent(() => import('@/components/ui/ske
 const { getRouteParam, go, onScreenActivated, url } = useRouter()
 const { currentUserCan } = usePolicies()
 
-const albumId = ref<number>()
+const albumId = ref<Album['id']>()
 const album = ref<Album | undefined>()
 const songs = ref<Song[]>([])
 const loading = ref(false)
@@ -153,11 +153,12 @@ const { SongListControls, config } = useSongListControls('Album')
 
 const useLastfm = toRef(commonStore.state, 'uses_last_fm')
 
-const isNormalArtist = computed(() => {
+const isStandardArtist = computed(() => {
   if (!album.value) {
     return true
   }
-  return !artistStore.isVarious(album.value.artist_id) && !artistStore.isUnknown(album.value.artist_id)
+
+  return !artistStore.isVarious(album.value.artist_name) && !artistStore.isUnknown(album.value.artist_name)
 })
 
 const download = () => downloadService.fromAlbum(album.value!)
@@ -201,7 +202,7 @@ watch(albumId, async id => {
   }
 })
 
-onScreenActivated('Album', () => (albumId.value = Number.parseInt(getRouteParam('id')!)))
+onScreenActivated('Album', () => (albumId.value = getRouteParam('id')))
 
 // if the current album has been deleted, go back to the list
 eventBus.on('SONGS_UPDATED', () => albumStore.byId(albumId.value!) || go(url('albums.index')))

@@ -14,7 +14,6 @@ use App\Services\Streamer\Adapters\StreamerAdapter;
 use App\Services\Streamer\Adapters\TranscodingStreamerAdapter;
 use App\Values\RequestedStreamingConfig;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class Streamer
@@ -35,7 +34,7 @@ class Streamer
             return app(PodcastStreamerAdapter::class);
         }
 
-        if ($this->shouldTranscode()) {
+        if ($this->config?->transcode || self::shouldTranscode($this->song)) {
             return app(TranscodingStreamerAdapter::class);
         }
 
@@ -55,45 +54,35 @@ class Streamer
         return $this->adapter->stream($this->song, $this->config);
     }
 
-    private function shouldTranscode(): bool
+    public function getAdapter(): StreamerAdapter
     {
-        // We only transcode local files. "Remote" transcoding (e.g., from Dropbox) is not supported.
-        if ($this->song->storage !== SongStorageType::LOCAL) {
-            return false;
-        }
+        return $this->adapter;
+    }
 
-        if ($this->config?->transcode) {
-            return true;
+    /**
+     * Determine if the given song should be transcoded based on its format and the server's FFmpeg installation.
+     */
+    private static function shouldTranscode(Song $song): bool
+    {
+        if ($song->isEpisode()) {
+            return false;
         }
 
         if (!self::hasValidFfmpegInstallation()) {
-            Log::warning('No FFmpeg installation available.');
-
             return false;
         }
 
-        $mimeType = File::mimeType($this->song->storage_metadata->getPath());
+        $extension = Str::lower(File::extension($song->storage_metadata->getPath()));
 
-        if (Str::endsWith($mimeType, 'flac') && config('koel.streaming.transcode_flac')) {
+        if ($extension === 'flac' && config('koel.streaming.transcode_flac')) {
             return true;
         }
 
-        foreach (config('koel.transcode_required_formats', []) as $format) {
-            if (Str::endsWith($mimeType, $format)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($extension, config('koel.transcode_required_formats', []), true);
     }
 
     private static function hasValidFfmpegInstallation(): bool
     {
         return app()->runningUnitTests() || is_executable(config('koel.streaming.ffmpeg_path'));
-    }
-
-    public function getAdapter(): StreamerAdapter
-    {
-        return $this->adapter;
     }
 }
