@@ -65,7 +65,7 @@ use Webmozart\Assert\Assert;
  * @property-read ?string $collaborator_email The email of the user who added the song to the playlist
  * @property-read ?string $collaborator_name The name of the user who added the song to the playlist
  * @property-read ?string $collaborator_avatar The avatar of the user who added the song to the playlist
- * @property-read ?int $collaborator_id The ID of the user who added the song to the playlist
+ * @property-read ?string $collaborator_public_id The public ID of the user who added the song to the playlist
  * @property-read ?string $added_at The date the song was added to the playlist
  * @property-read PlayableType $type
  *
@@ -83,8 +83,6 @@ class Song extends Model implements AuditableContract
     use Searchable;
     use SupportsDeleteWhereValueNotIn;
 
-    public const ID_REGEX = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-
     protected $guarded = [];
     protected $hidden = ['updated_at', 'path', 'mtime'];
 
@@ -100,7 +98,7 @@ class Song extends Model implements AuditableContract
         'episode_metadata' => EpisodeMetadataCast::class,
     ];
 
-    protected $with = ['album', 'artist', 'podcast'];
+    protected $with = ['album', 'artist', 'podcast', 'owner'];
 
     public static function query(?PlayableType $type = null, ?User $user = null): SongBuilder
     {
@@ -174,8 +172,7 @@ class Song extends Model implements AuditableContract
 
     public function ownedBy(User $user): bool
     {
-        // Do not use $song->owner->is($user) here, as it may trigger an extra query.
-        return $this->owner_id === $user->id;
+        return $this->owner->id === $user->id;
     }
 
     protected function storageMetadata(): Attribute
@@ -247,6 +244,15 @@ class Song extends Model implements AuditableContract
     public function isEpisode(): bool
     {
         return $this->type === PlayableType::PODCAST_EPISODE;
+    }
+
+    public function isStoredOnCloud(): bool
+    {
+        return in_array($this->storage, [
+            SongStorageType::S3,
+            SongStorageType::S3_LAMBDA,
+            SongStorageType::DROPBOX,
+        ], true);
     }
 
     public function __toString(): string

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Scanner;
 
 use App\Enums\ScanEvent;
 use App\Events\LibraryChanged;
@@ -65,7 +65,7 @@ class MediaScanner
      */
     private function gatherFiles(string $path): array
     {
-        $nameRegex = '/\.(' . implode('|', config('koel.supported_formats')) . ')$/i';
+        $nameRegex = '/\.(' . implode('|', config('koel.streaming.supported_formats')) . ')$/i';
 
         return iterator_to_array(
             $this->finder::create()

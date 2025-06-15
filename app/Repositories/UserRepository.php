@@ -12,9 +12,9 @@ use App\Values\SSOUser;
  */
 class UserRepository extends Repository
 {
-    public function getDefaultAdminUser(): User
+    public function getFirstAdminUser(): User
     {
-        return User::query()->where('is_admin', true)->oldest()->firstOrFail();
+        return User::firstAdmin();
     }
 
     public function findOneByEmail(string $email): ?User
@@ -29,5 +29,10 @@ class UserRepository extends Repository
             'sso_id' => $ssoUser->id,
             'sso_provider' => $ssoUser->provider,
         ]) ?? $this->findOneByEmail($ssoUser->email);
+    }
+
+    public function getOneByPublicId(string $publicId): User
+    {
+        return $this->getOneBy(['public_id' => $publicId]);
     }
 }

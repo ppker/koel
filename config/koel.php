@@ -46,60 +46,30 @@ return [
         'method' => env('STREAMING_METHOD'),
         'ffmpeg_path' => env('FFMPEG_PATH'),
         'transcode_flac' => env('TRANSCODE_FLAC', true),
+        'supported_formats' => ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'opus', 'aiff', 'aif'],
+        'transcode_required_formats' => ['aiff', 'aif'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Youtube Integration
-    |--------------------------------------------------------------------------
-    |
-    | Youtube integration requires an youtube API key, see wiki for more
-    |
-    */
-
-    'youtube' => [
-        'key' => env('YOUTUBE_API_KEY'),
-        'endpoint' => 'https://www.googleapis.com/youtube/v3',
+    'services' => [
+        'youtube' => [
+            'key' => env('YOUTUBE_API_KEY'),
+            'endpoint' => 'https://www.googleapis.com/youtube/v3',
+        ],
+        'lastfm' => [
+            'key' => env('LASTFM_API_KEY'),
+            'secret' => env('LASTFM_API_SECRET'),
+            'endpoint' => 'https://ws.audioscrobbler.com/2.0',
+        ],
+        'spotify' => [
+            'client_id' => env('SPOTIFY_CLIENT_ID'),
+            'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+        ],
+        'itunes' => [
+            'enabled' => env('USE_ITUNES', true),
+            'affiliate_id' => '1000lsGu',
+            'endpoint' => 'https://itunes.apple.com/search',
+        ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Last.FM Integration
-    |--------------------------------------------------------------------------
-    |
-    | See wiki on how to integrate with Last.FM
-    |
-    */
-
-    'lastfm' => [
-        'key' => env('LASTFM_API_KEY'),
-        'secret' => env('LASTFM_API_SECRET'),
-        'endpoint' => 'https://ws.audioscrobbler.com/2.0',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Spotify Integration
-    |--------------------------------------------------------------------------
-    |
-    | Spotify Integration requires client ID and secret.
-    |
-    */
-
-    'spotify' => [
-        'client_id' => env('SPOTIFY_CLIENT_ID'),
-        'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
-    ],
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | CDN
-    |--------------------------------------------------------------------------
-    |
-    |
-    |
-    */
 
     'cdn' => [
         'url' => env('CDN_URL'),
@@ -132,13 +102,6 @@ return [
     */
     'ignore_dot_files' => env('IGNORE_DOT_FILES', true),
 
-    'itunes' => [
-        'enabled' => env('USE_ITUNES', true),
-        'affiliate_id' => '1000lsGu',
-        'endpoint' => 'https://itunes.apple.com/search',
-    ],
-
-    'cache_media' => env('CACHE_MEDIA', true),
     'memory_limit' => env('MEMORY_LIMIT'),
     'force_https' => env('FORCE_HTTPS', false),
     'backup_on_delete' => env('BACKUP_ON_DELETE', true),
@@ -159,7 +122,4 @@ return [
         'sponsor_open_collective_url' => 'https://opencollective.com/koel',
         'demo' => env('KOEL_DEMO', false),
     ],
-
-    'supported_formats' => ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'opus', 'aiff'],
-    'transcode_required_formats' => ['aiff'],
 ];

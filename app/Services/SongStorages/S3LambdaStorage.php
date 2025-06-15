@@ -18,7 +18,7 @@ use Illuminate\Http\UploadedFile;
  * The legacy storage implementation for Lambda and S3, to provide backward compatibility.
  * In this implementation, the songs are supposed to be uploaded to S3 directly.
  */
-final class S3LambdaStorage extends S3CompatibleStorage
+class S3LambdaStorage extends S3CompatibleStorage
 {
     public function __construct( // @phpcs:ignore
         private readonly MediaMetadataService $mediaMetadataService,
@@ -29,8 +29,6 @@ final class S3LambdaStorage extends S3CompatibleStorage
 
     public function storeUploadedFile(UploadedFile $file, User $uploader): Song
     {
-        $this->assertSupported();
-
         throw new MethodNotImplementedException('Lambda storage does not support uploading.');
     }
 
@@ -46,12 +44,12 @@ final class S3LambdaStorage extends S3CompatibleStorage
         int $track,
         string $lyrics
     ): Song {
-        $user = $this->userRepository->getDefaultAdminUser();
+        $user = $this->userRepository->getFirstAdminUser();
         $path = Song::getPathFromS3BucketAndKey($bucket, $key);
-        $artist = Artist::getOrCreate($artistName);
+        $artist = Artist::getOrCreate($user, $artistName);
 
         $albumArtist = $albumArtistName && $albumArtistName !== $artistName
-            ? Artist::getOrCreate($albumArtistName)
+            ? Artist::getOrCreate($user, $albumArtistName)
             : $artist;
 
         $album = Album::getOrCreate($albumArtist, $albumName);
@@ -84,7 +82,7 @@ final class S3LambdaStorage extends S3CompatibleStorage
         $song->delete();
     }
 
-    public function delete(Song $song, bool $backup = false): void
+    public function delete(string $location, bool $backup = false): void
     {
         throw new MethodNotImplementedException('Lambda storage does not support deleting from filesystem.');
     }

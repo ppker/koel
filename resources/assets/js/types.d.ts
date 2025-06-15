@@ -117,7 +117,7 @@ interface ArtistInfo {
 
 interface Artist {
   type: 'artists'
-  readonly id: number
+  readonly id: string
   name: string
   image: string | null
   created_at: string
@@ -125,7 +125,7 @@ interface Artist {
 
 interface Album {
   type: 'albums'
-  readonly id: number
+  readonly id: string
   artist_id: Artist['id']
   artist_name: Artist['name']
   name: string
@@ -166,6 +166,7 @@ interface Song extends Playable {
   year: number | null
   lyrics: string
   is_public: boolean
+  is_external: boolean
   basename?: string
   deleted?: boolean
 }
